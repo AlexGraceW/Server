@@ -13,9 +13,18 @@ public class Main {
         server.addHandler("GET", "/*", Main::handleStaticFiles); // Обрабатываем все пути
         // Добавляем API-хендлеры
         server.addHandler("GET", "/messages", (request, responseStream) -> {
-            String responseText = "This is a GET response";
+            String lastParam = request.getQueryParam("last");
+            String responseText;
+
+            if (lastParam == null) {
+                responseText = "This is a GET response";
+            } else {
+                responseText = "Last messages count: " + lastParam;
+            }
+
             sendResponse(responseStream, "200 OK", "text/plain", responseText);
         });
+
 
         server.addHandler("POST", "/messages", (request, responseStream) -> {
             String responseText = "This is a POST response";
