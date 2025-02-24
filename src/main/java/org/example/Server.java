@@ -3,8 +3,6 @@ package org.example;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -37,23 +35,20 @@ public class Server {
 
     private void handleRequest(Socket socket) {
         try (
-                BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                InputStream inputStream = socket.getInputStream();
                 BufferedOutputStream out = new BufferedOutputStream(socket.getOutputStream())
         ) {
-            Request request = Request.parseRequest(reader, socket.getInputStream());
+            Request request = Request.parseRequest(inputStream);
 
-            // Получаем обработчики для метода (GET, POST и т. д.)
+            String cleanPath = request.getPath();
+
             Map<String, Handler> methodHandlers = handlers.getOrDefault(request.getMethod(), Map.of());
+            Handler handler = methodHandlers.get(cleanPath);
 
-            // Ищем точное совпадение пути
-            Handler handler = methodHandlers.get(request.getPath());
-
-            // Если точного совпадения нет, пробуем общий обработчик (например, "/*")
             if (handler == null) {
                 handler = methodHandlers.get("/*");
             }
 
-            // Если найден обработчик, выполняем его
             if (handler != null) {
                 handler.handle(request, out);
             } else {
