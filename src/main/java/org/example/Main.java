@@ -3,6 +3,7 @@ package org.example;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
@@ -13,14 +14,41 @@ public class Main {
         server.addHandler("GET", "/*", Main::handleStaticFiles); // Обрабатываем все пути
         // Добавляем API-хендлеры
         server.addHandler("GET", "/messages", (request, responseStream) -> {
-            String responseText = "This is a GET response";
+            String lastParam = request.getQueryParam("last");
+            String responseText;
+
+            if (lastParam == null) {
+                responseText = "This is a GET response";
+            } else {
+                responseText = "Last messages count: " + lastParam;
+            }
+
             sendResponse(responseStream, "200 OK", "text/plain", responseText);
         });
+
 
         server.addHandler("POST", "/messages", (request, responseStream) -> {
             String responseText = "This is a POST response";
             sendResponse(responseStream, "200 OK", "text/plain", responseText);
         });
+
+        server.addHandler("POST", "/submit", (request, responseStream) -> {
+            String name = request.getPostParam("name"); // "Alice"
+            List<String> allMessages = request.getPostParams().get("message"); // ["Hello World", "How are you"]
+
+            StringBuilder responseText = new StringBuilder("Name: " + name + ", Messages: ");
+            for (String message : allMessages) {
+                responseText.append(message).append(" ");
+            }
+
+            // Убираем лишний пробел в конце строки
+            String finalResponseText = responseText.toString().trim();
+
+            sendResponse(responseStream, "200 OK", "text/plain", finalResponseText);
+        });
+
+
+
 
         // Запускаем сервер
         server.listen(9999);
